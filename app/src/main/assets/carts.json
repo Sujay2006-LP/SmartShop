@@ -1,0 +1,19 @@
+[
+  {
+    "cart_id": "cart_001",
+    "user_id": "user_101",
+    "items": [
+      { "id": "prod_102", "name": "Mechanical Gaming Keyboard", "quantity": 1, "price": 3999 }
+    ],
+    "total_amount": 3999
+  },
+  {
+    "cart_id": "cart_002",
+    "user_id": "user_102",
+    "items": [
+      { "id": "prod_101", "name": "Ergonomic Wireless Mouse", "quantity": 1, "price": 1499 },
+      { "id": "prod_104", "name": "Desk Mat XXL (800x300mm)", "quantity": 1, "price": 599 }
+    ],
+    "total_amount": 2098
+  }
+]

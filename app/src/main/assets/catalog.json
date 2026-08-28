@@ -1,0 +1,47 @@
+[
+  {
+    "id": "prod_101",
+    "name": "Ergonomic Wireless Mouse",
+    "category": "Electronics",
+    "price": 1499,
+    "currency": "INR",
+    "tags": ["accessories", "office", "tech"],
+    "description": "Smooth precision optical tracking with long battery life."
+  },
+  {
+    "id": "prod_102",
+    "name": "Mechanical Gaming Keyboard",
+    "category": "Electronics",
+    "price": 3999,
+    "currency": "INR",
+    "tags": ["gaming", "tech", "rgb"],
+    "description": "Tactile switch keys with customizable RGB backlighting."
+  },
+  {
+    "id": "prod_103",
+    "name": "Padded Laptop Sleeve 15.6 inch",
+    "category": "Accessories",
+    "price": 799,
+    "currency": "INR",
+    "tags": ["travel", "protection", "office"],
+    "description": "Water-resistant neoprene sleeve with extra accessory pouch."
+  },
+  {
+    "id": "prod_104",
+    "name": "Desk Mat XXL (800x300mm)",
+    "category": "Accessories",
+    "price": 599,
+    "currency": "INR",
+    "tags": ["office", "setup", "desk"],
+    "description": "Anti-slip rubber base with stitched edges for mouse and keyboard."
+  },
+  {
+    "id": "prod_105",
+    "name": "USB-C Fast Charging Cable (2m)",
+    "category": "Electronics",
+    "price": 349,
+    "currency": "INR",
+    "tags": ["cable", "charging", "essentials"],
+    "description": "Braided durable nylon cable supporting up to 65W fast charging."
+  }
+]
