@@ -1,0 +1,5 @@
+- `[x]` Update `libs.versions.toml` with missing plugin definitions
+- `[x]` Update root `build.gradle.kts` to use aliases and declare all plugins
+- `[x]` Update `app/build.gradle.kts` to remove duplicate and use aliases
+- `[x]` Verify Gradle Sync
+- `[x]` Fix compiler error in `MainViewModel.kt` (bonus)

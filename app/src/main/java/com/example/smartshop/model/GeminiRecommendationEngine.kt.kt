@@ -7,7 +7,7 @@ class GeminiRecommendationEngine(private val apiKey: String) {
 
     // Using the active Gemini model
     private val generativeModel = GenerativeModel(
-        modelName = "gemini-2.5-flash",
+        modelName = "gemini-3.6-flash",
         apiKey = apiKey
     )
 
