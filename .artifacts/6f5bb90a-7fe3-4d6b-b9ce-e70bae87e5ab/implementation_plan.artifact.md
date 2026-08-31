@@ -1,27 +1,32 @@
-# Fix Duplicate Plugin and Missing Version Sync Error
+# Firestore Connectivity and Data Alignment Fix
 
-The project is failing to sync because `com.android.application` is requested twice in `app/build.gradle.kts` (once via `alias` and once via `id`). Additionally, the Kotlin Android and Google Services plugins are inconsistently declared, which may lead to further sync issues.
+The app is reporting `The database (default) does not exist`, which contradicts the console screenshot. This can happen due to cached emulator state, a mismatch in the `google-services.json`, or a trailing space in the collection name (which I suspect based on the URL in your screenshot).
+
+## User Review Required
+
+> [!CAUTION]
+> **Collection Naming**: Based on your screenshot URL (`products%20`), it looks like your collection might be named `"products "` (with a trailing space). I will update the app to try and find the collection even if it has a space, but it's best to rename it in the console to exactly `"products"`.
 
 ## Proposed Changes
 
-I will consolidate the plugin declarations into the Version Catalog (`libs.versions.toml`) and use aliases consistently across the project.
+### Data & Repository
 
-### Gradle Configuration
+#### [MODIFY] [FirebaseProductRepository.kt](file:///C:/Users/Sujay%20l%20patil/AndroidStudioProjects/SmartShop/app/src/main/java/com/example/smartshop/repository/FirebaseProductRepository.kt)
+- Disable Firestore persistence temporarily to ensure we are getting fresh data from the server and not a local cache error.
+- Add detailed logging for the Firebase Project ID and the connection status.
+- Add a "Retry" mechanism that specifically checks for both `"products"` and `"products "` collection names.
 
-#### [MODIFY] [libs.versions.toml](file:///C:/Users/Sujay%20l%20patil/AndroidStudioProjects/SmartShop/gradle/libs.versions.toml)
-- Add `kotlin-android` plugin with version `2.2.10`.
-- Add `google-services` plugin with version `4.4.2`.
+#### [MODIFY] [MainViewModel.kt](file:///C:/Users/Sujay%20l%20patil/AndroidStudioProjects/SmartShop/app/src/main/java/com/example/smartshop/model/MainViewModel.kt)
+- Add a `refresh()` function that can be triggered from the UI to re-run the connectivity check.
 
-#### [MODIFY] [build.gradle.kts (root)](file:///C:/Users/Sujay%20l%20patil/AndroidStudioProjects/SmartShop/build.gradle.kts)
-- Use aliases for all plugins.
-- Add `kotlin-android` to the root `plugins` block with `apply false`.
+### UI
 
-#### [MODIFY] [build.gradle.kts (app)](file:///C:/Users/Sujay%20l%20patil/AndroidStudioProjects/SmartShop/app/build.gradle.kts)
-- Remove the redundant `id("com.android.application")`.
-- Replace `id("org.jetbrains.kotlin.android")` and `id("com.google.gms.google-services")` with their respective aliases.
-- Clean up the `plugins` block.
+#### [MODIFY] [MainActivity.kt](file:///C:/Users/Sujay%20l%20patil/AndroidStudioProjects/SmartShop/app/src/main/java/com/example/smartshop/MainActivity.kt)
+- Improve the Error screen to show the exact Firebase Project ID being used. This will help confirm if the app is pointing to the right place.
 
 ## Verification Plan
 
-### Automated Tests
-- Run `./gradlew help` to verify that the project syncs and basic Gradle tasks can run without plugin errors.
+### Manual Verification
+1. Run the app and check the Logcat for "DIAGNOSTICS".
+2. Confirm the Project ID in the logs matches `smartshop-6c54f`.
+3. If an error appears, the UI will now show more detail.

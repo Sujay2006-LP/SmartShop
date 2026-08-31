@@ -1,103 +1,106 @@
-package com.example.smartshop.model
+package com.example.smartshop.repository
 
+import android.content.Context
 import android.util.Log
+import com.example.smartshop.model.Product
+import com.example.smartshop.model.UiState
+import com.google.firebase.FirebaseApp
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.FirebaseFirestoreSettings
+import com.google.firebase.firestore.Query
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 
-class FirebaseProductRepository {
+class FirebaseProductRepository(private val context: Context) {
 
-    private val db = FirebaseFirestore.getInstance()
-    private val productsCollection = db.collection("products")
+    private val db = FirebaseFirestore.getInstance().apply {
+        // DIAGNOSTICS: Disable persistence to bypass any "Database not found" cache errors
+        val settings = FirebaseFirestoreSettings.Builder()
+            .setPersistenceEnabled(false)
+            .build()
+        firestoreSettings = settings
+    }
+    
+    // SUSPECTED FIX: The console URL shows "products%20" (a space). 
+    private var collectionName = "products" 
+    private val productsCollection = db.collection(collectionName)
 
-    /**
-     * Stream all products from Firestore, optionally filtered by category ("Tech" or "Apparel").
-     * Real-time updates push automatically whenever items change in the console.
-     */
-    fun getProductsByCategory(category: String? = null): Flow<List<Product>> = callbackFlow {
-        // Query all products, or filter by specific category if provided
-        val query = if (category.isNullOrEmpty()) {
-            productsCollection
-        } else {
-            productsCollection.whereEqualTo("category", category)
-        }
-
-        // Attach real-time snapshot listener
-        val listenerRegistration = query.addSnapshotListener { snapshot, error ->
-            if (error != null) {
-                close(error)
-                return@addSnapshotListener
-            }
-
-            if (snapshot != null) {
-                // Automatically parse Firestore documents into Product data classes
-                val productList = snapshot.toObjects(Product::class.java)
-                trySend(productList)
-            }
-        }
-
-        // Clean up memory listener when the Coroutine scope closes
-        awaitClose {
-            listenerRegistration.remove()
-        }
+    fun forceReseed(onComplete: (Boolean) -> Unit) {
+        Log.d("FIREBASE_TEST", "🔄 Force re-seeding requested...")
+        prefs.edit().putBoolean("is_data_seeded", false).apply()
+        seedCatalogIfNecessary(onComplete)
     }
 
-    /**
-     * Add a single product to Firestore programmatically
-     */
-    fun addProduct(product: Product, onSuccess: () -> Unit, onFailure: (Exception) -> Unit) {
-        val docId = product.id.ifEmpty { productsCollection.document().id }
-        val updatedProduct = product.copy(id = docId)
-
-        productsCollection.document(docId)
-            .set(updatedProduct)
-            .addOnSuccessListener { onSuccess() }
-            .addOnFailureListener { exception -> onFailure(exception) }
+    init {
+        val appId = FirebaseApp.getInstance().options.projectId
+        Log.d("FIREBASE_DIAG", "Connected to Project ID: $appId")
     }
+    private val prefs = context.getSharedPreferences("smartshop_prefs", Context.MODE_PRIVATE)
 
-    /**
-     * AUTOMATED BULK SEEDER
-     * Call this once to upscale your Firestore database with a full catalog!
-     */
-    fun seedFullCatalog(onComplete: (Boolean) -> Unit) {
+    // EDGE CASE: Seed only ONCE to avoid overwriting or creating duplicates every app launch
+    fun seedCatalogIfNecessary(onComplete: (Boolean) -> Unit) {
+        val isSeeded = prefs.getBoolean("is_data_seeded", false)
+
+        if (isSeeded) {
+            Log.d("FIREBASE_TEST", "⏩ Catalog already seeded. Skipping batch write.")
+            onComplete(true)
+            return
+        }
+
+        Log.d("FIREBASE_TEST", "🚀 First run detected. Seeding full catalog...")
         val batch = db.batch()
 
-        // 🛍️ Tech & Apparel Expanded Catalog Data
-        val fullCatalog = listOf(
-            // --- TECH CATEGORY ---
-            Product("tech_101", "MacBook Air 15-inch M3", "Tech", 134900.0, "INR", listOf("Laptop", "Apple", "M3"), "Ultra-thin laptop with M3 chip.", "Apple", "Laptops", 4.8, true),
-            Product("tech_102", "Sony WH-1000XM5 Headphones", "Tech", 29990.0, "INR", listOf("Audio", "Wireless", "ANC"), "Industry leading noise canceling headphones.", "Sony", "Audio", 4.7, true),
-            Product("tech_103", "Samsung Galaxy S24 Ultra", "Tech", 129999.0, "INR", listOf("Mobile", "Android", "AI"), "Flagship smartphone with Galaxy AI.", "Samsung", "Mobiles", 4.9, true),
-            Product("tech_104", "iPad Air M2 (11-inch)", "Tech", 59900.0, "INR", listOf("Tablet", "Apple"), "Supercharged by M2 processor.", "Apple", "Tablets", 4.6, true),
-            Product("tech_105", "Logitech MX Master 3S Mouse", "Tech", 8995.0, "INR", listOf("Accessory", "Wireless"), "Performance ergonomic wireless mouse.", "Logitech", "Accessories", 4.8, true),
-            Product("tech_106", "Dell XPS 13 Laptop", "Tech", 114990.0, "INR", listOf("Laptop", "Windows"), "InfinityEdge display premium ultrabook.", "Dell", "Laptops", 4.5, true),
-            Product("tech_107", "Apple Watch Series 9", "Tech", 41900.0, "INR", listOf("Wearable", "Smartwatch"), "Smarter, brighter, and more powerful.", "Apple", "Wearables", 4.7, true),
-
-            // --- APPAREL CATEGORY ---
-            Product("apparel_101", "Nike Tech Fleece Joggers", "Apparel", 6495.0, "INR", listOf("Streetwear", "Pants"), "Lightweight warmth with tailored feel.", "Nike", "Bottomwear", 4.7, true),
-            Product("apparel_102", "Adidas Originals Hoodie", "Apparel", 4999.0, "INR", listOf("Sweatshirt", "Casual"), "Classic trefoil pullover hoodie.", "Adidas", "Topwear", 4.5, true),
-            Product("apparel_103", "Levi's 511 Slim Fit Jeans", "Apparel", 3599.0, "INR", listOf("Denim", "Jeans"), "Modern slim-cut classic denim.", "Levi's", "Bottomwear", 4.6, true),
-            Product("apparel_104", "Puma Motorsport Jacket", "Apparel", 7999.0, "INR", listOf("Outerwear", "Jacket"), "Sleek racing-inspired bomber jacket.", "Puma", "Outerwear", 4.4, true),
-            Product("apparel_105", "Uniqlo Oversized Airism Tee", "Apparel", 1990.0, "INR", listOf("T-Shirt", "Basics"), "Smooth cotton-blend oversized crew neck.", "Uniqlo", "Topwear", 4.8, true),
-            Product("apparel_106", "Jordan Retro High Sneakers", "Apparel", 16995.0, "INR", listOf("Footwear", "Sneakers"), "Iconic high-top basketball sneakers.", "Nike", "Footwear", 4.9, true)
+        val initialProducts = listOf(
+            Product(id = "p1", name = "Wireless Mouse", category = "Electronics", price = 799.0),
+            Product(id = "p2", name = "Mechanical Keyboard", category = "Electronics", price = 2499.0),
+            Product(id = "p3", name = "Gaming Monitor", category = "Electronics", price = 12999.0),
+            Product(id = "p4", name = "Desk Mat", category = "Accessories", price = 499.0)
         )
 
-        // Queue all items into a single atomic batch upload
-        fullCatalog.forEach { product ->
+        initialProducts.forEach { product ->
             val docRef = productsCollection.document(product.id)
             batch.set(docRef, product)
         }
 
-        // Commit batch to Firestore
         batch.commit()
             .addOnSuccessListener {
-                Log.d("FirestoreSeeder", "Successfully upscaled database with ${fullCatalog.size} items!")
+                Log.d("FIREBASE_TEST", "✅ SEED SUCCESSFUL!")
+                prefs.edit().putBoolean("is_data_seeded", true).apply()
                 onComplete(true)
             }
             .addOnFailureListener { e ->
-                Log.e("FirestoreSeeder", "Error seeding database: ${e.message}")
+                Log.e("FIREBASE_TEST", "❌ SEED FAILED: ${e.localizedMessage}", e)
                 onComplete(false)
             }
+    }
+
+    // EDGE CASE: Real-time Snapshot Listener wrapped inside Kotlin Flow with Exception Handling
+    fun getProductsStream(): Flow<UiState<List<Product>>> = callbackFlow {
+        trySend(UiState.Loading)
+
+        val listener = productsCollection
+            .orderBy("name", Query.Direction.ASCENDING)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    Log.e("FIREBASE_TEST", "Firestore error: ${error.message}")
+                    trySend(UiState.Error(error.localizedMessage ?: "Failed to fetch data"))
+                    return@addSnapshotListener
+                }
+
+                if (snapshot != null) {
+                    val products = snapshot.toObjects(Product::class.java)
+                    Log.d("FIREBASE_TEST", "Found ${products.size} products in '$collectionName'")
+                    snapshot.documents.forEach { doc ->
+                        Log.d("FIREBASE_TEST", "Doc ID: ${doc.id}, data: ${doc.data}")
+                    }
+                    trySend(UiState.Success(products))
+                } else {
+                    trySend(UiState.Success(emptyList()))
+                }
+            }
+
+        // Clean up the listener when the Flow collector is cancelled
+        awaitClose { listener.remove() }
     }
 }

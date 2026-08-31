@@ -1,7 +1,6 @@
 package com.example.smartshop
 
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -15,9 +14,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.smartshop.model.FirebaseProductRepository // Added import
 import com.example.smartshop.model.MainViewModel
 import com.example.smartshop.model.Product
+import com.example.smartshop.model.UiState
 import com.example.smartshop.ui.theme.SmartShopTheme
 
 class MainActivity : ComponentActivity() {
@@ -25,17 +24,6 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        Log.d("FIREBASE_TEST", "--- STARTING SEED TEST ---")
-
-        val repository = FirebaseProductRepository()
-        repository.seedFullCatalog { success ->
-            if (success) {
-                Log.d("FIREBASE_TEST", "✅ SEED SUCCESSFUL! Refresh your Firebase console.")
-            } else {
-                Log.e("FIREBASE_TEST", "❌ SEED FAILED! Check internet or project setup.")
-            }
-        }
 
         setContent {
             SmartShopTheme {
@@ -53,6 +41,7 @@ class MainActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SmartShopScreen(viewModel: MainViewModel) {
+    val productState by viewModel.productState.collectAsState()
     val cart by viewModel.cart.collectAsState()
     val recommendation by viewModel.recommendation.collectAsState()
     val isLoadingRec by viewModel.isLoadingRec.collectAsState()
@@ -108,13 +97,70 @@ fun SmartShopScreen(viewModel: MainViewModel) {
                 modifier = Modifier.padding(vertical = 8.dp)
             )
 
-            // 3. Product Catalog List
-            LazyColumn(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+            // 3. Product Catalog Area with Firestore UI State Handling
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
             ) {
-                items(viewModel.catalog) { product ->
-                    ProductRow(product = product, onAddToCart = { viewModel.addToCart(product) })
+                when (val currentState = productState) {
+                    is UiState.Loading -> {
+                        CircularProgressIndicator(
+                            modifier = Modifier.align(Alignment.Center)
+                        )
+                    }
+                    is UiState.Error -> {
+                        Column(
+                            modifier = Modifier.align(Alignment.Center).padding(16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = "❌ Firestore Error",
+                                style = MaterialTheme.typography.titleLarge,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = currentState.message,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Button(onClick = { viewModel.fetchProducts() }) {
+                                Text("Retry Connection")
+                            }
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Button(
+                                onClick = { viewModel.forceReseed() },
+                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary)
+                            ) {
+                                Text("Force Reset & Seed Data")
+                            }
+                        }
+                    }
+                    is UiState.Success -> {
+                        // currentState is now smart-cast to UiState.Success<List<Product>>
+                        val products = currentState.data
+
+                        if (products.isEmpty()) {
+                            Text(
+                                text = "No products found in catalog.",
+                                modifier = Modifier.align(Alignment.Center)
+                            )
+                        } else {
+                            LazyColumn(
+                                modifier = Modifier.fillMaxSize(),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                items(products) { product ->
+                                    ProductRow(
+                                        product = product,
+                                        onAddToCart = { viewModel.addToCart(product) }
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
@@ -144,6 +190,8 @@ fun SmartShopScreen(viewModel: MainViewModel) {
         }
     }
 }
+
+
 
 @Composable
 fun ProductRow(product: Product, onAddToCart: () -> Unit) {
