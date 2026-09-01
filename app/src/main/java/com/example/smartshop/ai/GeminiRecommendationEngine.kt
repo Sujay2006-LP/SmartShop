@@ -1,5 +1,7 @@
-package com.example.smartshop.model
+package com.example.smartshop.ai
 
+import com.example.smartshop.model.Cart
+import com.example.smartshop.model.Product
 import com.google.ai.client.generativeai.GenerativeModel
 import com.google.gson.Gson
 

@@ -1,9 +1,15 @@
-package com.example.smartshop.model
+package com.example.smartshop.viewmodel
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.smartshop.BuildConfig
+import com.example.smartshop.util.AssetHelper
+import com.example.smartshop.model.Cart
+import com.example.smartshop.model.CartItem
+import com.example.smartshop.ai.GeminiRecommendationEngine
+import com.example.smartshop.model.Product
+import com.example.smartshop.model.UiState
 import com.example.smartshop.repository.FirebaseProductRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -25,7 +31,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     // 3. Keep local reference to fetched catalog for Gemini recommendations
     private var currentCatalog: List<Product> = emptyList()
 
-    // 4. Cart & Recommendation States (Preserved from your original code)
+    // 4. Cart & Recommendation States
     private val _cart = MutableStateFlow(
         assetHelper.loadCarts().firstOrNull() ?: Cart("1", "user_1", emptyList(), 0.0)
     )
@@ -38,10 +44,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val isLoadingRec: StateFlow<Boolean> = _isLoadingRec.asStateFlow()
 
     init {
-        // Step 1: Check/Run Seed on first launch
+        // Direct call guarantees Firestore snapshot listener connects immediately
+        observeProducts()
+
+        // Run catalog seeding separately without blocking observation
         repository.seedCatalogIfNecessary {
-            // Step 2: Subscribe to Firestore real-time updates
-            observeProducts()
+            // Optional callback after seeding
         }
     }
 
@@ -51,7 +59,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 _productState.value = state
                 if (state is UiState.Success) {
                     currentCatalog = state.data
-                    // Trigger AI recommendation whenever catalog/cart updates
                     fetchRecommendation()
                 }
             }
@@ -91,10 +98,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         if (_cart.value.items.isEmpty() || currentCatalog.isEmpty()) return
 
         viewModelScope.launch {
-            _isLoadingRec.value = true
-            val result = recommendationEngine.getRecommendation(_cart.value, currentCatalog)
-            _recommendation.value = result
-            _isLoadingRec.value = false
+            try {
+                _isLoadingRec.value = true
+                val result = recommendationEngine.getRecommendation(_cart.value, currentCatalog)
+                _recommendation.value = result
+            } catch (e: Exception) {
+                _recommendation.value = "Add items to your cart for recommendations!"
+            } finally {
+                _isLoadingRec.value = false
+            }
         }
     }
 }

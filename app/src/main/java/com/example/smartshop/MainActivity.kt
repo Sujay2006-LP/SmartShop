@@ -14,7 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.smartshop.model.MainViewModel
+import com.example.smartshop.viewmodel.MainViewModel
 import com.example.smartshop.model.Product
 import com.example.smartshop.model.UiState
 import com.example.smartshop.ui.theme.SmartShopTheme
