@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -13,11 +14,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.example.smartshop.viewmodel.MainViewModel
-import com.example.smartshop.model.Product
 import com.example.smartshop.model.UiState
+import com.example.smartshop.ui.components.ProductCard
+import com.example.smartshop.ui.components.ProductDetailSheet
 import com.example.smartshop.ui.theme.SmartShopTheme
+import com.example.smartshop.viewmodel.MainViewModel
 
 class MainActivity : ComponentActivity() {
     private val viewModel: MainViewModel by viewModels()
@@ -45,6 +46,11 @@ fun SmartShopScreen(viewModel: MainViewModel) {
     val cart by viewModel.cart.collectAsState()
     val recommendation by viewModel.recommendation.collectAsState()
     val isLoadingRec by viewModel.isLoadingRec.collectAsState()
+
+    // States for Product Detail & Gemini Review Summarizer Sheet
+    val selectedProduct by viewModel.selectedProduct.collectAsState()
+    val reviewSummary by viewModel.reviewSummary.collectAsState()
+    val isLoadingSummary by viewModel.isLoadingSummary.collectAsState()
 
     Scaffold(
         topBar = {
@@ -97,7 +103,7 @@ fun SmartShopScreen(viewModel: MainViewModel) {
                 modifier = Modifier.padding(vertical = 8.dp)
             )
 
-            // 3. Product Catalog Area with Firestore UI State Handling
+            // 3. Product Catalog Area with Coil ProductCard UI & Click Action
             Box(
                 modifier = Modifier
                     .weight(1f)
@@ -111,7 +117,9 @@ fun SmartShopScreen(viewModel: MainViewModel) {
                     }
                     is UiState.Error -> {
                         Column(
-                            modifier = Modifier.align(Alignment.Center).padding(16.dp),
+                            modifier = Modifier
+                                .align(Alignment.Center)
+                                .padding(16.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Text(
@@ -139,7 +147,6 @@ fun SmartShopScreen(viewModel: MainViewModel) {
                         }
                     }
                     is UiState.Success -> {
-                        // currentState is now smart-cast to UiState.Success<List<Product>>
                         val products = currentState.data
 
                         if (products.isEmpty()) {
@@ -150,12 +157,17 @@ fun SmartShopScreen(viewModel: MainViewModel) {
                         } else {
                             LazyColumn(
                                 modifier = Modifier.fillMaxSize(),
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
                                 items(products) { product ->
-                                    ProductRow(
+                                    ProductCard(
                                         product = product,
-                                        onAddToCart = { viewModel.addToCart(product) }
+                                        onAddToCart = { item ->
+                                            viewModel.addToCart(item)
+                                        },
+                                        modifier = Modifier.clickable {
+                                            viewModel.selectProduct(product)
+                                        }
                                     )
                                 }
                             }
@@ -188,34 +200,16 @@ fun SmartShopScreen(viewModel: MainViewModel) {
                 }
             }
         }
-    }
-}
 
-
-
-@Composable
-fun ProductRow(product: Product, onAddToCart: () -> Unit) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(2.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .padding(12.dp)
-                .fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(text = product.name, fontWeight = FontWeight.Bold)
-                Text(
-                    text = "${product.category} • ₹${product.price}",
-                    style = MaterialTheme.typography.bodySmall
-                )
-            }
-            Button(onClick = onAddToCart) {
-                Text("Add", fontSize = 12.sp)
-            }
+        // 5. Product Details & Gemini Review Summary Bottom Sheet
+        selectedProduct?.let { product ->
+            ProductDetailSheet(
+                product = product,
+                aiSummary = reviewSummary,
+                isLoadingSummary = isLoadingSummary,
+                onDismiss = { viewModel.clearSelectedProduct() },
+                onAddToCart = { item -> viewModel.addToCart(item) }
+            )
         }
     }
 }

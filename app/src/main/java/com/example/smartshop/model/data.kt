@@ -1,5 +1,12 @@
 package com.example.smartshop.model
 
+data class Review(
+    val userId: String = "",
+    val userName: String = "",
+    val rating: Double = 5.0,
+    val comment: String = ""
+)
+
 data class Product(
     val id: String = "",
     val name: String = "",
@@ -11,7 +18,9 @@ data class Product(
     val brand: String = "",
     val subCategory: String = "",
     val rating: Double = 4.5,
-    val inStock: Boolean = true
+    val inStock: Boolean = true,
+    val imageUrl: String = "",
+    val reviews: List<Review> = emptyList()
 )
 
 data class CartItem(
