@@ -1,6 +1,9 @@
+# Project specific ignores
+local.properties
+google-services.json
+.artifacts/
 *.iml
 .gradle
-/local.properties
 /.idea/caches
 /.idea/libraries
 /.idea/modules.xml
@@ -12,4 +15,3 @@
 /captures
 .externalNativeBuild
 .cxx
-local.properties

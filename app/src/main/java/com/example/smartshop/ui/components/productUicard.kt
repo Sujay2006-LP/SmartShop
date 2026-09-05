@@ -11,6 +11,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.graphics.Color
 import com.example.smartshop.model.Product
 
 @Composable
@@ -25,7 +27,8 @@ fun ProductCard(
             .padding(horizontal = 16.dp, vertical = 6.dp),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
+            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            contentColor = Color.Black
         )
     ) {
         Row(
@@ -39,7 +42,7 @@ fun ProductCard(
                 model = product.imageUrl.ifEmpty { "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=500" },
                 contentDescription = product.name,
                 modifier = Modifier
-                    .size(70.dp)
+                    .size(80.dp)
                     .clip(RoundedCornerShape(8.dp)),
                 contentScale = ContentScale.Crop
             )
@@ -51,15 +54,28 @@ fun ProductCard(
                 Text(
                     text = product.name,
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.ExtraBold,
+                    color = Color.Black
                 )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "₹${product.price}",
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "₹${product.fairPrice}",
+                        style = MaterialTheme.typography.bodySmall,
+                        textDecoration = TextDecoration.LineThrough,
+                        color = Color.Gray
+                    )
+                }
                 Text(
-                    text = "${product.brand} • ₹${product.price}",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Text(
-                    text = "⭐ ${product.rating} (${product.reviews.size} reviews)",
-                    style = MaterialTheme.typography.bodySmall
+                    text = "${product.brand} • ⭐ ${product.rating}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.DarkGray
                 )
             }
 

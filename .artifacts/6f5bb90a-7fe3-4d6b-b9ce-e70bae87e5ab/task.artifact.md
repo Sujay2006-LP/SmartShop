@@ -1,3 +1,10 @@
-- `[ ]` Disable persistence and add diagnostics to `FirebaseProductRepository.kt`
-- `[ ]` Add detailed error info to `MainActivity.kt`
-- `[ ]` Check logs for Project ID confirmation
+- `[/]` Aesthetic Overhaul: Cyber Slate Theme
+    - `[ ]` Update `Color.kt` with Obsidian/Cyan palette
+    - `[ ]` Update `Theme.kt` for forced dark mode
+- `[/]` Final AI Synergy Logic
+    - `[ ]` Update `GeminiRecommendationEngine.kt` with detailed synergy prompts
+    - `[ ]` Add "Try this" link logic
+- `[/]` User Authentication & Logo
+    - `[ ]` Refactor `LoginScreen.kt` with provided logo vision
+    - `[ ]` Update `MainViewModel.kt` to handle persistent sessions
+- `[ ]` Final Verification of Store Flow

@@ -6,9 +6,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -24,7 +25,10 @@ fun ProductDetailSheet(
     onDismiss: () -> Unit,
     onAddToCart: (Product) -> Unit
 ) {
-    ModalBottomSheet(onDismissRequest = onDismiss) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        containerColor = Color.White
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -35,39 +39,66 @@ fun ProductDetailSheet(
                 contentDescription = product.name,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(180.dp)
+                    .height(200.dp)
                     .clip(RoundedCornerShape(12.dp)),
                 contentScale = ContentScale.Crop
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Text(text = product.name, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-            Text(text = "₹${product.price} • ⭐ ${product.rating}", style = MaterialTheme.typography.titleMedium)
-
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(text = product.description, style = MaterialTheme.typography.bodyMedium)
-
             Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                text = product.name, 
+                style = MaterialTheme.typography.titleLarge, 
+                fontWeight = FontWeight.Black,
+                color = Color.Black
+            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "₹${product.price}", 
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = "Fair Price: ₹${product.fairPrice}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.Gray
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = product.description, 
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.DarkGray
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
 
             // AI Review Summary Section
             Card(
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    contentColor = Color.Black
+                ),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Column(modifier = Modifier.padding(12.dp)) {
+                Column(modifier = Modifier.padding(16.dp)) {
                     Text(
                         text = "✨ AI Review Insights",
                         style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Black,
+                        color = Color.Black
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
                     if (isLoadingSummary) {
-                        CircularProgressIndicator(modifier = Modifier.size(20.dp))
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.Black)
                     } else {
                         Text(
-                            text = aiSummary ?: "Tap to load review summary.",
-                            style = MaterialTheme.typography.bodySmall
+                            text = aiSummary ?: "Loading expert review summary...",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.Black
                         )
                     }
                 }
