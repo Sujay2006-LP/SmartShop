@@ -39,22 +39,7 @@ app/src/main/java/com/example/smartshop/
 
 ---
 
-## 🛠 Hackathon Compliance (10-Point Checklist)
 
-This app was built strictly against the Track 01 problem statement:
-
-1.  **Revenue Growth**: Real-time synergistic upsells in the checkout flow.
-2.  **Reasoning**: Every suggestion comes with an expert-level explanation.
-3.  **Bounded**: Suggestions are strictly validated against the merchant's fixed catalog.
-4.  **Gated**: The `MainViewModel` acts as a gatekeeper, validating AI output before display.
-5.  **Explainable**: Every decision is logged with a human-readable reason.
-6.  **Audit Trail**: Full decision history (Suggested/Accepted/Blocked) is stored in Firebase.
-7.  **Failure Handling**: Guardrail violations (like price up-selling) are caught and bypassed gracefully.
-8.  **Razorpay Integration**: The payment gateway total updates dynamically with AI upsells.
-9.  **Measurable Outcome**: Audit logs track `cartTotalBefore` vs `cartTotalAfter`.
-10. **Clean Clone**: Standard Gradle structure ensures the project runs out of the box.
-
----
 
 ## 📱 Features
 
